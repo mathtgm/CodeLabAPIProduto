@@ -23,15 +23,15 @@ async function bootstrap() {
 
   setupOpenAPI(app);
 
-  await app.listen(3000); // TODO - Change port
+  await app.listen(3003);
 }
 bootstrap();
 
 function setupOpenAPI(app: INestApplication): void {
-  const config = new DocumentBuilder().setTitle('CodelabAPITemplate').build(); // TODO - Change title
+  const config = new DocumentBuilder().setTitle('CodelabAPIProduto').build();
   const document = SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('docs', app, document, { useGlobalPrefix: true });
 
-  Logger.log('OpenAPI is running on http://localhost:3000/api/v1/docs'); // TODO - Change port
+  Logger.log('OpenAPI is running on http://localhost:3003/api/v1/docs');
 }

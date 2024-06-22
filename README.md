@@ -1,26 +1,35 @@
-# CodeLabAPIProduto
+# CodeLabAPITemplate
 
-API de Produtos do CodeLab
+This is a template for creating a CodeLabAPI project. It is a simple project that can be used to create a new CodeLabAPI using a development setup for NestJS inside a Docker Container.
 
-## Development Start
+## Development
 
 ```bash
-docker compose up --build
+docker-compose up --build
 ```
 
-## Execução de Testes
+## Testing
 
-- "attach" ao container para executar os testes.
-- cato não deserje obter os relatórios de cobertura, remova o sufixo `:cov` dos comandos abaixo.
+Attach to the running container and run the tests.
 
 ### Unit
 
 ```bash
-npm run test:cov
+    npm run test:cov
 ```
 
 ### E2E
 
+Attach to the running container and run the tests.
+
 ```bash
-npm run test:e2e:cov
+    npm run test:e2e:cov
+```
+
+For not generating coverage reports, run without the `:cov` suffix.
+
+## CI/CD
+
+```bash
+
 ```

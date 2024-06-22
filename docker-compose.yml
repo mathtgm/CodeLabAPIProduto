@@ -4,24 +4,35 @@ services:
     build:
       context: .docker/node/
       dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
     entrypoint: .docker/node/entrypoint.sh
     ports:
-      - "3003:3003"
-      - "7003:7003"
+      - '3003:3003'
+      - '7003:7003'
     volumes:
       - .:/home/node/app
+    networks:
+      - codelab-net
 
   db-produto:
     container_name: db-produto
     build:
-      context: .docker/postgres/
+      context: ./.docker/postgres
       dockerfile: Dockerfile
     command: postgres -c log_statement=all -p 5003
     volumes:
-      - ./.docker/postgres/data:/var/lib/postgresql/data
+      - '.docker/postgres/data:/var/lib/postgresql/data'
     environment:
-      POSTGRES_DB: api-produto
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=api-produto
     ports:
-      - "5003:5003"
+      - '5003:5003'
+    networks:
+      - codelab-net
+
+networks:
+  codelab-net:
+    name: codelab-net
+    external: true

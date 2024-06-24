@@ -1,0 +1,35 @@
+services:
+  api-produto-test:
+    container_name: api-produto-test
+    build:
+      context: .docker/node/
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=test
+    entrypoint: .docker/node/entrypoint.sh
+    ports:
+      - '3003:3003'
+      - '7003:7003'
+    volumes:
+      - .:/home/node/app
+    depends_on:
+      db-produto-test:
+        condition: service_healthy
+
+  db-produto-test:
+    container_name: db-produto-test
+    build:
+      context: ./.docker/postgres
+      dockerfile: Dockerfile
+    command: postgres -c log_statement=all -p 5003
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=api-produto-test
+    ports:
+      - '5003:5003'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -p 5003']
+      interval: 5s
+      timeout: 5s
+      retries: 5

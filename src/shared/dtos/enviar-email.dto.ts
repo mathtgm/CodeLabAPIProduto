@@ -1,4 +1,12 @@
-import { IsDefined, IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsDefined,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { IEmailAttachment } from '../interfaces/email-attachment.interface';
 
 export class EnviarEmailDto {
   @IsString()
@@ -20,4 +28,8 @@ export class EnviarEmailDto {
   @IsNotEmpty()
   @IsDefined()
   template: string;
+
+  @IsOptional()
+  @IsArray()
+  attachments: IEmailAttachment[];
 }

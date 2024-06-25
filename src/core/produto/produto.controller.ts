@@ -6,9 +6,10 @@ import {
   Param,
   Patch,
   Post,
-  Query
+  Query,
 } from '@nestjs/common';
 import { HttpResponse } from '../../shared/classes/http-response';
+import { EMensagem } from '../../shared/enums/mensagem.enum';
 import { IFindAllFilter } from '../../shared/interfaces/find-all-filter.interface';
 import { IFindAllOrder } from '../../shared/interfaces/find-all-order.interface';
 import { IResponse } from '../../shared/interfaces/response.interface';
@@ -67,5 +68,19 @@ export class ProdutoController {
     const data = await this.produtoService.unactivate(+id);
 
     return new HttpResponse<boolean>(data).onUnactivated();
+  }
+
+  @Get('export/pdf/:idUsuario/:order')
+  async exportPdf(
+    @Param('idUsuario') idUsuario: number,
+    @Param('order', ParseFindAllOrder) order: IFindAllOrder,
+    @Query('filter', ParseFindAllFilter)
+    filter: IFindAllFilter | IFindAllFilter[],
+  ): Promise<IResponse<boolean>> {
+    const data = await this.produtoService.exportPdf(idUsuario, order, filter);
+
+    return new HttpResponse<boolean>(data).onSuccess(
+      EMensagem.IniciadaGeracaoPDF,
+    );
   }
 }

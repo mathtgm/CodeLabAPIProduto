@@ -171,8 +171,6 @@ export class ProdutoService {
       const base64 = filedata.toString('base64');
 
       const usuario = await this.getUsuarioFromGrpc(idUsuario);
-      // const emailUsuario = 'gustavo.coleta@vrsoft.com.br';
-      // const nomeUsuario = 'Gustavo Coleta';
 
       if (usuario.id === 0) {
         throw new HttpException(

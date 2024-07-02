@@ -5,6 +5,7 @@ export enum EMensagem {
   DeveSerVazio = 'deve ser vazio',
   DeveSerInformado = 'deve ser informado',
   ErroExportarPDF = 'Erro ao exportar PDF',
+  ErroComunicacaoGrpcUsuario = 'Erro ao conectar ao gRPC - APIUsuario',
   ExcluidoSucesso = 'Excluído com sucesso',
   FilterInvalido = 'Filter inválido',
   ImpossivelCadastrar = 'Impossível realizar esse cadastro',
@@ -17,6 +18,7 @@ export enum EMensagem {
   OrderInvalido = 'Order inválido',
   SalvoSucesso = 'Salvo com sucesso',
   TokenInvalido = 'Token inválido',
+  UsuarioNaoIdentificado = 'Usuário não identificado',
   ProdutoSenhaInvalido = 'Usuário e/ou senha inválidos',
   VerifiqueEnderecoEmailInformado = 'Verifique o endereço de e-mail informado',
 }

@@ -1,11 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsBase64,
-  IsEmail,
-  IsNotEmpty,
-  MaxLength,
-} from 'class-validator';
+import { IsArray, IsBase64, IsNotEmpty, MaxLength } from 'class-validator';
 import { EMensagem } from '../../../shared/enums/mensagem.enum';
 
 export class CreateProdutoDto {
@@ -15,11 +9,9 @@ export class CreateProdutoDto {
   })
   descricao: string;
 
-  @IsEmail({}, { message: `precoCusto ${EMensagem.NaoValido}` })
   @IsNotEmpty({ message: `precoCusto ${EMensagem.NaoPodeSerVazio}` })
   precoCusto: string;
 
-  @IsEmail({}, { message: `precoVenda ${EMensagem.NaoValido}` })
   @IsNotEmpty({ message: `precoVenda ${EMensagem.NaoPodeSerVazio}` })
   precoVenda: string;
 

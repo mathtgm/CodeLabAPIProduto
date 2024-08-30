@@ -16,7 +16,7 @@ export class CreateProdutoDto {
   precoVenda: string;
 
   @IsBase64()
-  imagem: string;
+  imagem: string | null | undefined;
 
   @IsNotEmpty({ message: `ativo ${EMensagem.NaoPodeSerVazio}` })
   ativo: boolean;

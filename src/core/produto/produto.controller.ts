@@ -41,9 +41,8 @@ export class ProdutoController {
     @Query('filter', ParseFindAllFilter)
     filter: IFindAllFilter | IFindAllFilter[],
   ): Promise<IResponse<Produto[]>> {
-    const data = await this.produtoService.findAll(page, size, order, filter);
-
-    return new HttpResponse<Produto[]>(data);
+    const { data, count } = await this.produtoService.findAll(page, size, order, filter);
+    return new HttpResponse<Produto[]>(data, undefined, count);
   }
 
   @Get(':id')

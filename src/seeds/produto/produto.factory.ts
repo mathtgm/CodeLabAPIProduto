@@ -12,6 +12,7 @@ define(Produto, () => {
   produto.descricao = faker.commerce.productName();
   produto.precoCusto = precoCusto;
   produto.precoVenda = precoVenda;
+  produto.imagem = ''
   produto.ativo = true;
   produto.codigoBarras = [faker.commerce.isbn(13).replace(/-/g, '')];
 

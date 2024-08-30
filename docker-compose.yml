@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - NODE_ENV=development
-    entrypoint: .docker/node/entrypoint.sh
+    entrypoint: sh .docker/node/entrypoint.sh
     ports:
       - '3003:3003'
       - '7003:7003'

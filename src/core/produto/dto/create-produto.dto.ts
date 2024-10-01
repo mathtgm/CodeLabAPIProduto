@@ -10,10 +10,10 @@ export class CreateProdutoDto {
   descricao: string;
 
   @IsNotEmpty({ message: `precoCusto ${EMensagem.NaoPodeSerVazio}` })
-  precoCusto: string;
+  precoCusto: string | number;
 
   @IsNotEmpty({ message: `precoVenda ${EMensagem.NaoPodeSerVazio}` })
-  precoVenda: string;
+  precoVenda: string | number;
 
   @IsBase64()
   imagem: string | null | undefined;

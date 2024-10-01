@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { EMensagem } from '../../shared/enums/mensagem.enum';
 import { Produto } from './entities/produto.entity';
 import { ProdutoService } from './produto.service';
+import { ExportPdfService } from '../../shared/services/export-pdf.service';
 
 describe('ProdutoService', () => {
   let service: ProdutoService;
@@ -21,8 +22,29 @@ describe('ProdutoService', () => {
             save: jest.fn(),
             findOne: jest.fn(),
             find: jest.fn(),
+            findAndCount: jest.fn()
           },
         },
+        {
+          provide: 'GRPC_USUARIO',
+          useValue: {
+            getService: jest.fn(),
+            FindOne: jest.fn()
+          },
+        },
+        {
+          provide: 'MAIL_SERVICE',
+          useValue: {
+            emit: jest.fn(),
+            get: jest.fn()
+          }
+        },
+        {
+          provide: ExportPdfService,
+          useValue: {
+            export: jest.fn()
+          }
+        }
       ],
     }).compile();
 
@@ -36,21 +58,21 @@ describe('ProdutoService', () => {
   });
 
   describe('create', () => {
-    it('criar um novo usuário', async () => {
+    it('criar um novo produto', async () => {
       const createProdutoDto = {
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
         ativo: true,
-        admin: true,
-        permissao: [],
+        codigoBarras: ['7891000100103']
       };
 
       const mockProduto = Object.assign(createProdutoDto, { id: 1 });
 
       const spyRepositorySave = jest
         .spyOn(repository, 'save')
-        .mockReturnValue(Promise.resolve(mockProduto) as any);
+        .mockReturnValue(Promise.resolve(mockProduto));
 
       const response = await service.create(createProdutoDto);
 
@@ -58,72 +80,95 @@ describe('ProdutoService', () => {
       expect(spyRepositorySave).toHaveBeenCalled();
     });
 
-    it('lançar erro ao repetir um email quando criar um novo produto', async () => {
-      const createProdutoDto = {
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
-        ativo: true,
-        admin: true,
-        permissao: [],
-      };
-
-      const mockProduto = Object.assign(createProdutoDto, { id: 1 });
-
-      const spyRepositoryFindOne = jest
-        .spyOn(repository, 'findOne')
-        .mockReturnValue(Promise.resolve(mockProduto) as any);
-
-      try {
-        await service.create(createProdutoDto);
-      } catch (error: any) {
-        expect(error).toBeInstanceOf(HttpException);
-        expect(error.message).toBe(EMensagem.ImpossivelCadastrar);
-        expect(spyRepositoryFindOne).toHaveBeenCalled();
-      }
-    });
   });
 
   describe('findAll', () => {
-    it('obter uma listagem de usuários', async () => {
-      const mockListaProduto = [
-        {
-          id: 1,
-          nome: 'Nome Teste',
-          email: 'nome.teste@teste.com',
-          senha: '123456',
-          ativo: true,
-          admin: true,
-          permissao: [],
-        },
-      ];
+
+    const mockListaProduto = [
+      {
+        id: 1,
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
+        ativo: true,
+        codigoBarras: ['7891000100103']
+      },
+    ];
+
+    const mockOrderFilter = { column: 'id', sort: 'asc' as 'asc' };
+    
+    it('obter uma listagem de produtos', async () => {
 
       const spyRepositoryFindOne = jest
-        .spyOn(repository, 'find')
-        .mockReturnValue(Promise.resolve(mockListaProduto) as any);
+        .spyOn(repository, 'findAndCount')
+        .mockReturnValue(Promise.resolve([mockListaProduto, 1]));
 
-      const response = await service.findAll(1, 10);
+      const response = await service.findAll(0, 10, mockOrderFilter, null);
 
-      expect(response).toEqual(mockListaProduto);
+      expect(response.data).toEqual(mockListaProduto);
       expect(spyRepositoryFindOne).toHaveBeenCalled();
     });
+
+    it('obter uma listagem de produtos por descrição', async () => {
+
+      const mockFilter = { column: 'descricao', value: 'Leite' }
+
+      const spyRepositoryFindOne = jest
+        .spyOn(repository, 'findAndCount')
+        .mockReturnValue(Promise.resolve([mockListaProduto, 1]));
+
+      const response = await service.findAll(0, 10, mockOrderFilter, mockFilter);
+
+      expect(response.data).toEqual(mockListaProduto);
+      expect(spyRepositoryFindOne).toHaveBeenCalled();
+    });
+
+    it('obter uma listagem de produtos ativos', async () => {
+
+      const mockFilter = { column: 'ativo', value: true }
+
+      const spyRepositoryFindOne = jest
+        .spyOn(repository, 'findAndCount')
+        .mockReturnValue(Promise.resolve([mockListaProduto, 1]));
+
+      const response = await service.findAll(0, 10, mockOrderFilter, mockFilter);
+
+      expect(response.data).toEqual(mockListaProduto);
+      expect(spyRepositoryFindOne).toHaveBeenCalled();
+    });
+    
+    it('obter uma listagem de produtos por ids', async () => {
+
+      const mockFilter = { column: 'id', value: 1 }
+
+      const spyRepositoryFindOne = jest
+        .spyOn(repository, 'findAndCount')
+        .mockReturnValue(Promise.resolve([mockListaProduto, 1]));
+
+      const response = await service.findAll(0, 10, mockOrderFilter, mockFilter);
+
+      expect(response.data).toEqual(mockListaProduto);
+      expect(spyRepositoryFindOne).toHaveBeenCalled();
+    });
+
   });
 
   describe('findOne', () => {
     it('obter um usuário', async () => {
       const mockProduto = {
         id: 1,
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
         ativo: true,
-        admin: true,
-        permissao: [],
+        codigoBarras: ['7891000100103']
       };
 
       const spyRepositoryFindOne = jest
         .spyOn(repository, 'findOne')
-        .mockReturnValue(Promise.resolve(mockProduto) as any);
+        .mockReturnValue(Promise.resolve(mockProduto));
 
       const response = await service.findOne(1);
 
@@ -133,43 +178,38 @@ describe('ProdutoService', () => {
   });
 
   describe('update', () => {
-    it('alterar um usuário', async () => {
+    it('alterar um produto', async () => {
       const updateProdutoDto = {
         id: 1,
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
         ativo: true,
-        admin: true,
-        permissao: [],
+        codigoBarras: ['7891000100103']
       };
 
       const mockProduto = Object.assign(updateProdutoDto, {});
 
-      const spyRepositoryFindOne = jest
-        .spyOn(repository, 'findOne')
-        .mockReturnValue(Promise.resolve(mockProduto) as any);
-
       const spyRepositorySave = jest
         .spyOn(repository, 'save')
-        .mockReturnValue(Promise.resolve(mockProduto) as any);
+        .mockReturnValue(Promise.resolve(mockProduto));
 
       const response = await service.update(1, updateProdutoDto);
 
       expect(response).toEqual(updateProdutoDto);
-      expect(spyRepositoryFindOne).toHaveBeenCalled();
       expect(spyRepositorySave).toHaveBeenCalled();
     });
 
     it('lançar erro ao enviar ids diferentes quando alterar um produto', async () => {
       const updateProdutoDto = {
         id: 1,
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
         ativo: true,
-        admin: true,
-        permissao: [],
+        codigoBarras: ['7891000100103']
       };
 
       try {
@@ -180,56 +220,23 @@ describe('ProdutoService', () => {
       }
     });
 
-    it('lançar erro ao repetir um email já utilizado quando alterar um produto', async () => {
-      const updateProdutoDto = {
-        id: 1,
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
-        ativo: true,
-        admin: true,
-        permissao: [],
-      };
-
-      const mockProdutoFindOne = {
-        id: 2,
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: 'abcdef',
-        ativo: true,
-        admin: true,
-        permissao: [],
-      };
-
-      const spyRepositoryFindOne = jest
-        .spyOn(repository, 'findOne')
-        .mockReturnValue(Promise.resolve(mockProdutoFindOne) as any);
-
-      try {
-        await service.update(1, updateProdutoDto);
-      } catch (error: any) {
-        expect(error).toBeInstanceOf(HttpException);
-        expect(error.message).toBe(EMensagem.ImpossivelAlterar);
-        expect(spyRepositoryFindOne).toHaveBeenCalled();
-      }
-    });
   });
 
   describe('unactivate', () => {
-    it('desativar um usuário', async () => {
+    it('desativar um produto', async () => {
       const mockProdutoFindOne = {
         id: 1,
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
         ativo: true,
-        admin: true,
-        permissao: [],
+        codigoBarras: ['7891000100103']
       };
 
       const spyRepositoryFindOne = jest
         .spyOn(repository, 'findOne')
-        .mockReturnValue(Promise.resolve(mockProdutoFindOne) as any);
+        .mockReturnValue(Promise.resolve(mockProdutoFindOne));
 
       const mockProdutoSave = Object.assign(mockProdutoFindOne, {
         ativo: false,
@@ -237,7 +244,7 @@ describe('ProdutoService', () => {
 
       const spyRepositorySave = jest
         .spyOn(repository, 'save')
-        .mockReturnValue(Promise.resolve(mockProdutoSave) as any);
+        .mockReturnValue(Promise.resolve(mockProdutoSave));
 
       const response = await service.unactivate(1);
 
@@ -249,7 +256,7 @@ describe('ProdutoService', () => {
     it('lançar erro ao não encontrar o produto usando o id quando alterar um produto', async () => {
       const spyRepositoryFindOne = jest
         .spyOn(repository, 'findOne')
-        .mockReturnValue(Promise.resolve(null) as any);
+        .mockReturnValue(Promise.resolve(null));
 
       try {
         await service.unactivate(1);

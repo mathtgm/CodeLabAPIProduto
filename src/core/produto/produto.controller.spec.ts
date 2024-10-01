@@ -19,6 +19,7 @@ describe('ProdutoController', () => {
             findOne: jest.fn(),
             update: jest.fn(),
             unactivate: jest.fn(),
+            exportPdf: jest.fn()
           },
         },
       ],
@@ -33,14 +34,14 @@ describe('ProdutoController', () => {
   });
 
   describe('create', () => {
-    it('criar um novo usuário', async () => {
+    it('criar um novo produto', async () => {
       const createProdutoDto = {
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
         ativo: true,
-        admin: true,
-        permissao: [],
+        codigoBarras: ['7891000100103']
       };
 
       const mockProduto = Object.assign(createProdutoDto, { id: 1 });
@@ -58,45 +59,53 @@ describe('ProdutoController', () => {
   });
 
   describe('findAll', () => {
-    it('obter uma listagem de usuários', async () => {
-      const mockListaProduto = [
-        {
-          id: 1,
-          nome: 'Nome Teste',
-          email: 'nome.teste@teste.com',
-          senha: '123456',
-          ativo: true,
-          admin: true,
-          permissao: [],
-        },
-      ];
+
+    const mockListaProduto = [
+      {
+        id: 1,
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
+        ativo: true,
+        codigoBarras: ['7891000100103']
+      },
+    ];
+
+    const mockOrderFilter = { column: 'id', sort: 'asc' as 'asc' };
+
+    it('obter uma listagem de produtos', async () => {
+
+      const mockFilter = { column: '', value: '' }
 
       const spyServiceFindAll = jest
         .spyOn(service, 'findAll')
-        .mockReturnValue(Promise.resolve(mockListaProduto) as any);
+        .mockReturnValue(Promise.resolve({ message: undefined, count: 1, data: mockListaProduto }));
 
-      const response = await controller.findAll(1, 10);
+      const response = await controller.findAll(0, 10, mockOrderFilter, mockFilter);
 
       expect(response.message).toEqual(undefined);
       expect(response.data).toEqual(mockListaProduto);
       expect(spyServiceFindAll).toHaveBeenCalled();
     });
+
   });
 
   describe('findOne', () => {
-    it('obter um usuário', async () => {
+    it('obter um produto', async () => {
       const mockProduto = {
         id: 1,
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
         ativo: true,
-        admin: true,
-        permissao: [],
+        codigoBarras: ['7891000100103']
       };
+
       const spyServiceFindOne = jest
         .spyOn(service, 'findOne')
-        .mockReturnValue(Promise.resolve(mockProduto) as any);
+        .mockReturnValue(Promise.resolve(mockProduto));
 
       const response = await controller.findOne(1);
 
@@ -107,20 +116,20 @@ describe('ProdutoController', () => {
   });
 
   describe('update', () => {
-    it('alterar um usuário', async () => {
+    it('alterar um produto', async () => {
       const mockProduto = {
         id: 1,
-        nome: 'Nome Teste',
-        email: 'nome.teste@teste.com',
-        senha: '123456',
+        descricao: 'Leite Integral',
+        precoCusto: 10.00,
+        precoVenda: 12.00,
+        imagem: undefined,
         ativo: true,
-        admin: true,
-        permissao: [],
+        codigoBarras: ['7891000100103']
       };
 
       const spyServiceUpdate = jest
         .spyOn(service, 'update')
-        .mockReturnValue(Promise.resolve(mockProduto) as any);
+        .mockReturnValue(Promise.resolve(mockProduto));
 
       const response = await controller.update(1, mockProduto);
 
@@ -131,7 +140,7 @@ describe('ProdutoController', () => {
   });
 
   describe('unactivate', () => {
-    it('desativar um usuário', async () => {
+    it('desativar produto', async () => {
       const spyServiceUpdate = jest
         .spyOn(service, 'unactivate')
         .mockReturnValue(Promise.resolve(false) as any);
@@ -141,6 +150,24 @@ describe('ProdutoController', () => {
       expect(response.message).toEqual(EMensagem.DesativadoSucesso);
       expect(response.data).toEqual(false);
       expect(spyServiceUpdate).toHaveBeenCalled();
+    });
+  });
+  
+  describe('exportPdf', () => {
+    it('exporta um PDF', async () => {
+
+      const mockOrderFilter = { column: 'id', sort: 'asc' as 'asc' };
+      const mockFilter = { column: '', value: '' }
+
+      const spyServiceExportPdf = jest
+        .spyOn(service, 'exportPdf')
+        .mockReturnValue(Promise.resolve(true));
+
+      const response = await controller.exportPdf(1, mockOrderFilter, mockFilter);
+
+      expect(response.message).toEqual(EMensagem.IniciadaGeracaoPDF);
+      expect(response.data).toEqual(true);
+      expect(spyServiceExportPdf).toHaveBeenCalled();
     });
   });
 });

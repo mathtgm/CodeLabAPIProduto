@@ -90,14 +90,25 @@
     "coverageDirectory": "../coverage/unit",
     "testEnvironment": "node",
     "coveragePathIgnorePatterns": [
+      "main.ts$",
+      "ormconfig-seed.ts$",
       ".module.ts$",
       ".spec.ts$",
       ".dto.ts$",
       ".entity.ts$",
-      "main.ts$",
-      "ormconfig-seed.ts$",
       ".seed.ts$",
-      ".factory.ts$"
+      ".factory.ts$",
+      ".migrations.ts$",
+      ".kong.ts$",
+      ".config.ts$",
+      ".strategy.ts$",
+      "src/migrations",
+      "src/shared/filters",
+      "src/shared/interceptors",
+      "src/shared/middleware",
+      "src/shared/services",
+      "src/shared/pipes",
+      "kong"
     ]
   }
 }

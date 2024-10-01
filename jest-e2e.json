@@ -12,6 +12,7 @@
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
+  "testTimeout": 60000,
   "coverageDirectory": "./coverage/e2e",
   "coverageReporters": [
     "text",

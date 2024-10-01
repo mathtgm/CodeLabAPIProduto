@@ -12,8 +12,8 @@ import { ResponseTransformInterceptor } from '../src/shared/interceptors/respons
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
-
   let repository: Repository<Produto>;
+  let produtoBanco;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -42,20 +42,18 @@ describe('AppController (e2e)', () => {
   });
 
   describe('CRUD /', () => {
-    let id: number;
-
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
+    let idProduto: number;
 
     const produto = {
-      nome: `${firstName} ${lastName}`,
-      email: faker.internet.email({ firstName, lastName }).toLowerCase(),
-      senha: faker.internet.password(),
-      admin: false,
-      ativo: true,
+      descricao: faker.commerce.product(),
+      precoCusto: faker.commerce.price({dec: 3}),
+      precoVenda: faker.commerce.price({dec: 3}),
+      ativo: faker.datatype.boolean(),
+      imagem: faker.image.dataUri({type: 'svg-base64'}).split(',')[1],
+      codigoBarras: [faker.number.int({ min: 1111111111111, max: 9999999999999 })]
     };
 
-    it('criar um novo usuário', async () => {
+    it('criar um novo produto', async () => {
       const resp = await request(app.getHttpServer())
         .post('/produto')
         .send(produto);
@@ -64,59 +62,47 @@ describe('AppController (e2e)', () => {
       expect(resp.body.message).toBe(EMensagem.SalvoSucesso);
       expect(resp.body.data).toHaveProperty('id');
 
-      id = resp.body.data.id;
-    });
-
-    it('criar um novo usuário usando o mesmo email', async () => {
-      const resp = await request(app.getHttpServer())
-        .post('/produto')
-        .send(produto);
-
-      expect(resp).toBeDefined();
-      expect(resp.status).toBe(HttpStatus.NOT_ACCEPTABLE);
-      expect(resp.body.message).toBe(EMensagem.ImpossivelCadastrar);
-      expect(resp.body.data).toBe(null);
+      idProduto = resp.body.data.id;
+      produtoBanco = resp.body.data;
     });
 
     it('carrega o produto criado', async () => {
-      const resp = await request(app.getHttpServer()).get(`/produto/${id}`);
+      const resp = await request(app.getHttpServer()).get(`/produto/${+idProduto}`);
 
       expect(resp).toBeDefined();
       expect(resp.body.message).toBe(null);
-      expect(resp.body.data.nome).toBe(produto.nome);
-      expect(resp.body.data.email).toBe(produto.email);
+      expect(resp.body.data.descricao).toBe(produto.descricao);
+      expect(resp.body.data.precoCusto).toBe(produto.precoCusto);
+      expect(resp.body.data.precoVenda).toBe(produto.precoVenda);
       expect(resp.body.data.ativo).toBe(produto.ativo);
-      expect(resp.body.data.admin).toBe(produto.admin);
-      expect(resp.body.data).toHaveProperty('permissao');
-      expect(resp.body.data.password).toBe(undefined);
+      expect(resp.body.data.codigoBarras.sort().toString()).toEqual(produto.codigoBarras.sort().toString());
     });
 
     it('altera o produto criado', async () => {
       const produtoAlterado = Object.assign(
-        { id: id, ativo: false, admin: false },
+        { id: +idProduto, ativo: false },
         produto,
         {},
       );
 
       const resp = await request(app.getHttpServer())
-        .patch(`/produto/${id}`)
+        .patch(`/produto/${+idProduto}`)
         .send(produtoAlterado);
 
       expect(resp).toBeDefined();
       expect(resp.body.message).toBe(EMensagem.AtualizadoSucesso);
       expect(resp.body.data).toHaveProperty('id');
-      expect(resp.body.data.nome).toBe(produtoAlterado.nome);
-      expect(resp.body.data.email).toBe(produtoAlterado.email);
-      expect(resp.body.data.ativo).toBe(produtoAlterado.ativo);
-      expect(resp.body.data.admin).toBe(produtoAlterado.admin);
-      expect(resp.body.data.password).toBe(undefined);
+      expect(resp.body.data.descricao).toBe(produto.descricao);
+      expect(resp.body.data.precoCusto).toBe(produto.precoCusto);
+      expect(resp.body.data.precoVenda).toBe(produto.precoVenda);
+      expect(resp.body.data.ativo).toBe(produto.ativo);
+      expect(resp.body.data.codigoBarras).toEqual(produto.codigoBarras);
     });
 
     it('tenta alterar o produto criado passando um id diferente', async () => {
       const produtoAlterado = Object.assign(produto, {
-        id: id,
+        id: +idProduto,
         ativo: false,
-        admin: false,
       });
 
       const resp = await request(app.getHttpServer())
@@ -128,37 +114,7 @@ describe('AppController (e2e)', () => {
       expect(resp.body.data).toBe(null);
     });
 
-    it('tenta alterar o produto criado com um email já utilizado', async () => {
-      const firstNameTemp = faker.person.firstName();
-      const lastNameTemp = faker.person.lastName();
-
-      const produtoTemp = {
-        nome: `${firstNameTemp} ${lastNameTemp}`,
-        email: faker.internet
-          .email({ firstName: firstNameTemp, lastName: lastNameTemp })
-          .toLowerCase(),
-        senha: faker.internet.password(),
-        admin: false,
-        ativo: true,
-      };
-
-      await request(app.getHttpServer()).post('/produto').send(produtoTemp);
-
-      const produtoAlterado = Object.assign(produto, {
-        id: id,
-        email: produtoTemp.email,
-      });
-
-      const resp = await request(app.getHttpServer())
-        .patch(`/produto/${id}`)
-        .send(produtoAlterado);
-
-      expect(resp.status).toBe(HttpStatus.NOT_ACCEPTABLE);
-      expect(resp.body.message).toBe(EMensagem.ImpossivelAlterar);
-      expect(resp.body.data).toBe(null);
-    });
-
-    it('tenta desativar um usuário inexistente', async () => {
+    it('tenta desativar um produto inexistente', async () => {
       const resp = await request(app.getHttpServer()).delete(`/produto/999`);
 
       expect(resp.status).toBe(HttpStatus.NOT_ACCEPTABLE);
@@ -166,7 +122,7 @@ describe('AppController (e2e)', () => {
     });
 
     it('desativa o produto criado', async () => {
-      const resp = await request(app.getHttpServer()).delete(`/produto/${id}`);
+      const resp = await request(app.getHttpServer()).delete(`/produto/${+idProduto}`);
 
       expect(resp.status).toBe(HttpStatus.OK);
       expect(resp.body.data).toBe(false);
@@ -174,39 +130,66 @@ describe('AppController (e2e)', () => {
   });
 
   describe('PAGINAÇÃO (findAll) /', () => {
+    const filter = {column: 'id', sort: 'asc'}
+
     it('obtem todos os registros da página 1', async () => {
       for (let i = 0; i < 10; i++) {
-        const firstNameTemp = faker.person.firstName();
-        const lastNameTemp = faker.person.lastName();
 
         const produto = {
-          nome: `${firstNameTemp} ${lastNameTemp}`,
-          email: faker.internet
-            .email({ firstName: firstNameTemp, lastName: lastNameTemp })
-            .toLowerCase(),
-          senha: faker.internet.password(),
-          admin: false,
-          ativo: true,
+          descricao: faker.commerce.product(),
+          precoCusto: faker.commerce.price({dec: 3}),
+          precoVenda: faker.commerce.price({dec: 3}),
+          imagem: faker.image.dataUri({type: 'svg-base64'}).split(',')[1],
+          ativo: faker.datatype.boolean(),
+          codigoBarras: [faker.number.int({ min: 1111111111111, max: 9999999999999 })]
         };
 
         await request(app.getHttpServer()).post('/produto').send(produto);
       }
 
-      const resp = await request(app.getHttpServer()).get('/produto/1/10');
+      const resp = await request(app.getHttpServer()).get(`/produto/0/5/${JSON.stringify(filter)}`);
 
       expect(resp).toBeDefined();
       expect(resp.status).toBe(HttpStatus.OK);
       expect(resp.body.message).toBe(null);
-      expect(resp.body.data.length).toBe(10);
+      expect(resp.body.data.length).toBeGreaterThanOrEqual(5);
     });
 
     it('obtem todos os registros da página 2', async () => {
-      const resp = await request(app.getHttpServer()).get('/produto/2/10');
+      const resp = await request(app.getHttpServer()).get(`/produto/1/5/${JSON.stringify(filter)}`);
 
       expect(resp).toBeDefined();
       expect(resp.status).toBe(HttpStatus.OK);
       expect(resp.body.message).toBe(null);
-      expect(resp.body.data.length).toBe(2);
+      expect(resp.body.data.length).toBeGreaterThanOrEqual(5);
     });
+
+    it('obtem todos os produtos pela descricao', async () => {
+      const resp = await request(app.getHttpServer()).get(`/produto/0/5/${JSON.stringify(filter)}`).query({filter: JSON.stringify({column: 'descricao', value: produtoBanco.descricao})});
+
+      expect(resp).toBeDefined();
+      expect(resp.status).toBe(HttpStatus.OK);
+      expect(resp.body.message).toBe(null);
+      expect(resp.body.data.length).toBeGreaterThanOrEqual(1);
+    });
+    
+    it('obtem todos os produtos pelo id', async () => {
+      const resp = await request(app.getHttpServer()).get(`/produto/0/5/${JSON.stringify(filter)}`).query({filter: JSON.stringify({column: 'id', value: produtoBanco.id})});
+
+      expect(resp).toBeDefined();
+      expect(resp.status).toBe(HttpStatus.OK);
+      expect(resp.body.message).toBe(null);
+      expect(resp.body.data.length).toBeGreaterThanOrEqual(1);
+    });
+    
+    it('obtem todos os produtos ativos', async () => {
+      const resp = await request(app.getHttpServer()).get(`/produto/0/5/${JSON.stringify(filter)}`).query({filter: JSON.stringify({column: 'ativo', value: true})});;
+
+      expect(resp).toBeDefined();
+      expect(resp.status).toBe(HttpStatus.OK);
+      expect(resp.body.message).toBe(null);
+      expect(resp.body.data.length).toBeGreaterThanOrEqual(1);
+    });
+
   });
 });

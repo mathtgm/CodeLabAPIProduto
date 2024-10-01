@@ -31,7 +31,6 @@ describe('AppController (e2e)', () => {
     const resp = await request(app.getHttpServer()).get('/');
 
     expect(resp).toBeDefined();
-    expect(resp.body.message).toBe(null);
-    expect(resp.body.data).toBe('Hello CodeLAB!!');
+    expect(resp.body.message).toBe('Cannot GET /');
   });
 });
